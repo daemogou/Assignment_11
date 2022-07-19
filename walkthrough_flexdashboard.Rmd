@@ -1,0 +1,80 @@
+---
+title: "Brian's Flexdashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(plotly)
+library(leaflet)
+library(sp)
+library(flexdashboard)
+library(shiny)
+library(shinydashboard)
+```
+
+Write text here that you want to appear in the grey section at the top of your flexdashboard.
+
+
+```{r}
+galton <- readRDS("galton.rds") #read in rds file
+cities_file <- read.csv("worldcities.csv") #read in dataset
+```
+
+```{r}
+cities <- cities_file %>% #cleaning
+  select(city_ascii,country,iso3, population,lat,lng) %>%
+  rename(City = city_ascii,
+         Country = country,
+         Abbr = iso3
+         )
+```
+
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+ggplotly(ggplot(data = galton) + #static plot
+  geom_histogram(aes(x = height, fill=sex), binwidth = 1, alpha = 0.5, position = "identity") +
+  labs(
+    title = "Child Height Vs Father Height",
+    x = "Father's Height (inches)",
+    y = "frequency (n)"
+  ))
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+ggplotly(ggplot(galton) + #static plot
+  geom_point(aes(father,height,color = sex)) +
+  labs(
+    title = "Child Height vs Father Height",
+    x = "Father Height (inches)",
+    y = "Child Height (inches)"
+  ))
+```
+
+### Chart C
+
+```{r}
+ggplotly(ggplot(galton) + #static plot
+  geom_point(aes(father, height, color = sex), size=2) +
+  geom_smooth(aes(father,height), method="lm") +
+  labs(
+    title = "Child Height vs Father Height (static)",
+    x = "Father's Height (inches)",
+    y = "Child's Height (inches)"
+  ))
+```
+

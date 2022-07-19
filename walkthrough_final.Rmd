@@ -1,0 +1,335 @@
+---
+title: "World City Walkthrough"
+author: "Brian"
+date: "12/9/2021"
+output: html_document
+---
+
+#Walkthrough Part 1: Plotly
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(plotly)
+library(leaflet)
+library(sp)
+library(flexdashboard)
+library(shiny)
+library(shinydashboard)
+```
+
+
+##random graph from scratch
+```{r}
+p <- plot_ly( 
+  x = rnorm(1000),
+  y = rnorm(1000),
+  mode = 'markers'
+)
+```
+
+```{r}
+p #interactive plotly graph of randomly distributed numbers
+```
+
+##Scatter plot using plotly from scratch
+```{r}
+plot_ly(
+  x = c(1,2,3,4,5,6,7),
+  y = c(1,2,3,4,5,6,7),
+  type = 'scatter',
+  mode = 'markers'
+) 
+```
+
+##Bar chart using plotly from scratch
+```{r}
+plot_ly(
+  x = c(1,2,3),
+  y = c(5,6,7),
+  type = 'bar',
+  mode = 'markers'
+)
+```
+
+##Bubble Chart using plotly from scratch
+```{r}
+plot_ly(
+  x = c(1,2,3),
+  y = c(5,6,7),
+  type = "scatter",
+  mode = "markers",
+  size = c(25,40,20),
+  marker = list(color = c('red','blue','green')))
+```
+
+##Heatmaps using plotly from scratch
+```{r}
+plot_ly(
+  z = volcano,
+  type = "heatmap"
+)
+```
+
+##Area Plot using plotly from scratch
+```{r}
+plot_ly(
+  x = c(1,2,3),
+  y = c(5,6,7),
+  type = "scatter",
+  mode = "lines",
+  fill = "tozeroy"
+)
+```
+
+```{r}
+galton <- readRDS("galton.rds") #read in rds file
+```
+
+
+##Static Histogram using ggplot2
+```{r}
+ggplot(data = galton) + #static plot
+  geom_histogram(aes(x = height, fill=sex), binwidth = 1, alpha = 0.5, position = "identity") +
+  labs(
+    title = "Child Height Vs Father Height (static)",
+    x = "Father's Height (inches)",
+    y = "frequency (n)"
+  )
+```
+
+
+##Interactive Histogram using ggplotly
+```{r}
+ex1 <- ggplot(galton) + #dynamic plot
+  geom_histogram(aes(x = height, fill=sex), binwidth = 1, alpha = 0.5, position = "identity") +
+  labs(
+    title = "Child Height Vs Father Height (dynamic)",
+    x = "Father's Height (inches)",
+    y = "frequency (n)"
+  )
+```
+
+
+```{r}
+ggplotly(ex1)
+```
+
+##Scatterplot using ggpplotly
+```{r}
+ggplot(galton) + #static plot
+  geom_point(aes(father,height,color = sex)) +
+  labs(
+    title = "Child Height vs Father Height (static)",
+    x = "Father Height (inches)",
+    y = "Child Height (inches)"
+  )
+```
+
+
+```{r}
+ggplotly(ggplot(galton) + #dynamic plot
+  geom_point(aes(father,height,color = sex)) +
+  labs(
+    title = "Child Height vs Father Height (dynamic)",
+    x = "Father Height (inches)",
+    y = "Child Height (inches)"
+  ))
+```
+
+```{r}
+ggplot(galton) + #static plot
+  geom_point(aes(father, height, color = sex), size=2) +
+  geom_smooth(aes(father,height), method="lm") +
+  labs(
+    title = "Child Height vs Father Height (static)",
+    x = "Father's Height (inches)",
+    y = "Child's Height (inches)"
+  )
+```
+
+```{r}
+ex2 <- ggplot(galton) + #static plot
+  geom_point(aes(father, height, color = sex), size=2) +
+  geom_smooth(aes(father,height), method="lm") +
+  labs(
+    title = "Child Height vs Father Height (static)",
+    x = "Father's Height (inches)",
+    y = "Child's Height (inches)"
+  )
+```
+
+```{r}
+ggplotly(ex2)
+```
+
+
+#LEAFLET - INTERACTIVE MAPS USING R
+```{r}
+map_example01 <- leaflet() %>% #quick example
+  addTiles() %>% #default is OpenStreetMaps
+  addMarkers(lng=174.786, lat = -36.852, popup = "Birthplace of R")
+```
+
+```{r}
+map_example01 #The birthplace of R
+```
+
+
+#PREPPING YOUR FILES
+```{r}
+cities_file <- read.csv("worldcities.csv") #read in dataset
+```
+
+```{r}
+head(cities_file) #examine data
+```
+
+
+```{r}
+cities <- cities_file %>% #cleaning
+  select(city_ascii,country,iso3, population,lat,lng) %>%
+  rename(City = city_ascii,
+         Country = country,
+         Abbr = iso3
+         )
+```
+
+#casting
+```{r}
+cities$lng <- as.numeric(cities$lng) #casting longitude as integer
+cities$lat <- as.numeric(cities$lat) #casting latitude as integer
+cities$population <- as.numeric(cities$population) #casting population as integer
+```
+
+```{r}
+cities.sp <- SpatialPointsDataFrame(cities[,c(5,6)], cities[,-c(5,6)])
+```
+
+
+```{r}
+cities_df <- data.frame(cities) #creates proper data frame
+```
+
+
+
+##Adding a background to your map
+```{r}
+bg_example1 = leaflet() %>% #add background
+  addProviderTiles(providers$Esri.NatGeoWorldMap) #third party tiles
+```
+
+```{r}
+bg_example1 #only has Nat Geo background
+```
+
+```{r}
+bg_example2 <- leaflet() %>% #different background
+  addProviderTiles("CartoDB.Positron")
+```
+
+
+```{r}
+bg_example2 #CartoDB Background
+```
+
+```{r}
+bg_example3 <- leaflet() %>% #different background
+  addProviderTiles("NASAGIBS.ViirsEarthAtNight2012")
+```
+
+```{r}
+bg_example3 #CartoDB Background
+```
+
+##Setting markers to your map
+```{r}
+mega_city <- cities %>% #subset of data of cities with population over 15 million
+  filter(population > 8000000)
+```
+
+
+```{r}
+example_markers <- leaflet() %>% #adding markers
+  addTiles() %>% 
+  addMarkers(data = mega_city, lng = ~lng, lat = ~lat, popup = ~City)
+```
+
+```{r}
+example_markers
+```
+
+
+
+##CUSTOM POPUPS
+
+```{r}
+example_cmarkers1 <- leaflet() %>% #adding markers
+  addTiles() %>% 
+  addMarkers(data = mega_city, lng = ~lng, lat = ~lat, popup = ~paste("<h3>Name: ",City,"</h3><br>", sep=" "))
+```                                                                          
+
+```{r}
+example_cmarkers1
+```
+
+
+```{r}
+example_cmarkers2 <- leaflet() %>% #adding markers
+  addTiles() %>% 
+  addMarkers(data = mega_city, lng = ~lng, lat = ~lat, popup = ~paste("<h3>Name: ",City,"</h3><br>","Country: ", Country, "<br>Population: ",population, sep=" "))
+```
+
+
+```{r}
+example_cmarkers2
+```
+
+```{r}
+example_cmarkers3 <- leaflet() %>% #adding markers
+  addProviderTiles("NASAGIBS.ViirsEarthAtNight2012") %>% 
+  addMarkers(data = mega_city, lng = ~lng, lat = ~lat, popup = ~paste("<h3>Name: ",City,"</h3><br>","Country: ", Country, "<br>Population: ",population, sep=" "))
+```
+
+```{r}
+example_cmarkers3
+```
+
+##SET VIEW
+```{r}
+example_view <- leaflet(mega_city) %>%
+  addTiles() %>%
+  setView(lng = 126.9, lat = 37.5, zoom = 6)
+```
+
+```{r}
+example_view
+```
+
+
+##ADDING POLYLINES
+```{r}
+example_poly1 <- leaflet(mega_city) %>%
+  addTiles() %>%
+  addMarkers(data = mega_city, lng = ~lng, lat = ~lat, popup = ~City) %>%
+  addPolylines(lat = ~lat, lng = ~lng, color = "green")
+```
+
+
+```{r}
+example_poly1 #lines connecting the cities
+```
+
+```{r}
+example_poly2 <- leaflet(mega_city) %>%
+  addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
+  addPolylines(lat = ~lat, lng = ~lng, color = "green") %>%
+  addPopups(lat = ~lat, lng = ~lng, popup = ~Abbr) #adds abbreviations
+```
+
+
+```{r}
+example_poly2 #lines connecting the cities and adding abbreviations
+```
+
+
